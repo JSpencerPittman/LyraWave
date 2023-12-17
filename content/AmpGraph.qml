@@ -8,13 +8,13 @@ import LW.AudioLib
 Item {
     id: ampGraph
     anchors.fill: parent
-    property int refreshRateMS: 30
-    property int tickCnt: 20
-    property int timeSpanMS: 1000
+    property int refreshRateMS: 10
+    property int displayMS: 10*1000
+    // property int tickCnt: 20
+    // property int timeSpanMS: 1000
 
     Amplitudes {
         id: amplitudeData
-        onYUpdated: updateSeries()
     }
 
     MediaPlayer {
@@ -29,7 +29,7 @@ Item {
         ValuesAxis {
             id: valueAxisX
             min: 0
-            max: ampGraph.tickCnt - 1
+            max: displayMS / refreshRateMS
         }
 
         ValuesAxis {
@@ -51,8 +51,8 @@ Item {
         interval: ampGraph.refreshRateMS
         repeat: true
         triggeredOnStart: false
-        onTriggered: amplitudeData.shift();
-        // property int rounds: 0
+        property int cnt: 0
+        onTriggered: shiftRight()
     }
 
     Button {
@@ -63,15 +63,16 @@ Item {
         }
     }
 
-    function updateSeries() {
-        lineSeries.clear();
-        let jump = parseInt(ampGraph.timeSpanMS / (ampGraph.refreshRateMS * ampGraph.tickCnt));
-        for(let i = 0; i < ampGraph.tickCnt; ++i)
-               lineSeries.append(i, amplitudeData.y[i*jump]);
+    function shiftRight() {
+        ++valueAxisX.min;
+        ++valueAxisX.max;
     }
 
     Component.onCompleted: {
-        amplitudeData.initShift(0, ampGraph.refreshRateMS, ampGraph.timeSpanMS)
-        updateSeries();
+        lineSeries.clear();
+        amplitudeData.loadMS(0, 1000*60, 10);
+        console.log(amplitudeData.y.length);
+        for(let i = 0; i < amplitudeData.y.length; ++i)
+            lineSeries.append(i, amplitudeData.y[i]);
     }
 }

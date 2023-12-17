@@ -13,18 +13,20 @@
 
 class Amplitudes : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QList<double> y READ y NOTIFY yUpdated)
+    Q_PROPERTY(QVector<double> y READ y NOTIFY yUpdated)
     QML_ELEMENT
 
 public:
     Amplitudes(QObject *parent = nullptr);
 
-    QList<double> y();
+    QVector<double> y();
 
-    Q_INVOKABLE void loadMS(int startMS, int endMS);
+    Q_INVOKABLE void loadMS(int startMS, int endMS, int refreshRateMS);
 
     Q_INVOKABLE void initShift(int startMS, int refreshRateMS, int timeSpanMS);
     Q_INVOKABLE void shift();
+
+    Q_INVOKABLE QVector<double> loadAmplitudes(int startMS, int endMS, int refreshRateMS);
 
 signals:
     void yUpdated();
