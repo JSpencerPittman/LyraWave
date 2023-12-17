@@ -19,13 +19,13 @@ Item {
         ValuesAxis {
             id: valueAxisX
             min: 0
-            max: 15
+            max: 30
         }
 
         ValuesAxis {
             id: valueAxisY
-            min: 0
-            max: 15
+            min: -1
+            max: 1
         }
 
 
@@ -37,8 +37,16 @@ Item {
     }
 
     Button {
-        text: "increment"
-        onClicked: amplitudeData.increment()
+        text: "shift"
+        id: shiftButton
+        property int count: 0
+        onClicked: shift()
+    }
+
+    function shift() {
+        let start = (shiftButton.count * 100);
+        amplitudeData.loadMS(start, start+100);
+        shiftButton.count++;
     }
 
     function updateSeries() {

@@ -6,6 +6,7 @@ option(BUILD_QDS_COMPONENTS "Build design studio components" ON)
 project(LyraWaveApp LANGUAGES CXX)
 
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 6.6 REQUIRED COMPONENTS Core Gui Qml Quick Widgets)
 
