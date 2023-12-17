@@ -5,6 +5,7 @@ qt_add_qml_module(AudioLib
         Amplitudes.h
         Amplitudes.cpp
         Wav.h
+        MoveAvg.hpp
        RESOURCES
         rsc/sample.qrc)
 

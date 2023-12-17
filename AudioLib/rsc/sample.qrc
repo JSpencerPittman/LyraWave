@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/Audio">
         <file>StarWars3.wav</file>
+        <file>tropicLove.wav</file>
     </qresource>
 </RCC>

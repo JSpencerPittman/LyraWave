@@ -1,30 +1,40 @@
 import QtQuick 6.2
 import QtCharts
 import QtQuick.Controls
+import QtMultimedia
 import LyraWave
 import LW.AudioLib
 
 Item {
+    id: ampGraph
     anchors.fill: parent
+    property int refreshRateMS: 30
+    property int tickCnt: 20
+    property int timeSpanMS: 1000
 
     Amplitudes {
         id: amplitudeData
         onYUpdated: updateSeries()
     }
 
+    MediaPlayer {
+        id: audioPlayer
+        source: "qrc:/Audio/tropicLove.wav"
+        audioOutput: AudioOutput {}
+    }
+
     ChartView {
         anchors.fill: parent
-        // antialiasing: true
 
         ValuesAxis {
             id: valueAxisX
             min: 0
-            max: 30
+            max: ampGraph.tickCnt - 1
         }
 
         ValuesAxis {
             id: valueAxisY
-            min: -1
+            min: 0
             max: 1
         }
 
@@ -36,25 +46,32 @@ Item {
         }
     }
 
-    Button {
-        text: "shift"
-        id: shiftButton
-        property int count: 0
-        onClicked: shift()
+    Timer {
+        id: cntTimer
+        interval: ampGraph.refreshRateMS
+        repeat: true
+        triggeredOnStart: false
+        onTriggered: amplitudeData.shift();
+        // property int rounds: 0
     }
 
-    function shift() {
-        let start = (shiftButton.count * 100);
-        amplitudeData.loadMS(start, start+100);
-        shiftButton.count++;
+    Button {
+        text: "start"
+        onClicked: {
+            audioPlayer.play()
+            cntTimer.start()
+        }
     }
 
     function updateSeries() {
         lineSeries.clear();
-        for(let i = 0; i < amplitudeData.y.length; ++i) {
-            lineSeries.append(i, amplitudeData.y[i]);
-        }
+        let jump = parseInt(ampGraph.timeSpanMS / (ampGraph.refreshRateMS * ampGraph.tickCnt));
+        for(let i = 0; i < ampGraph.tickCnt; ++i)
+               lineSeries.append(i, amplitudeData.y[i*jump]);
     }
 
-    Component.onCompleted: updateSeries()
+    Component.onCompleted: {
+        amplitudeData.initShift(0, ampGraph.refreshRateMS, ampGraph.timeSpanMS)
+        updateSeries();
+    }
 }

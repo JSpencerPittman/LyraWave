@@ -7,8 +7,8 @@ import LyraWave
 Window {
     // width: mainScreen.width
     // height: mainScreen.height
-    width: 480
-    height: 300
+    width: 1500
+    height: 600
 
     visible: true
     title: "LyraWave"
