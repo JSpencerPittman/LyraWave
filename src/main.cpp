@@ -3,6 +3,8 @@
 
 #include <QApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QStandardPaths>
 
 #include "app_environment.h"
 #include "import_qml_components_plugins.h"

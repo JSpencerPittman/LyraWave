@@ -1,101 +1,61 @@
 #include "Amplitudes.h"
 
-#include <iostream>
-
 Amplitudes::Amplitudes(QObject *parent) : QObject(parent) {
-    QFile file(":/Audio/tropicLove.wav");
+    loadAudioFile(":/Audio/tropicLove.wav");
+}
+
+QVector<double> Amplitudes::amplitudes() {
+    return m_qvAmplitude;
+}
+
+void Amplitudes::loadAudioFile(const QString& path) {
+    QFile file(path);
     file.open(QIODevice::ReadOnly);
-    QByteArray dataByteArray = file.readAll();
-    std::vector<uint8_t> rawByteVec(dataByteArray.begin(), dataByteArray.end());
-    m_audioFile.loadFromMemory(rawByteVec);
+    QByteArray byteArray = file.readAll();
+    std::vector<uint8_t> byteVec(byteArray.begin(), byteArray.end());
+    m_afAudioFile.loadFromMemory(byteVec);
 
-    m_sampleRate = m_audioFile.getSampleRate();
-    m_numSamples = m_audioFile.getNumSamplesPerChannel();
+    m_nSampleRate = m_afAudioFile.getSampleRate();
+    m_nNumSamples = m_afAudioFile.getNumSamplesPerChannel();
 
-    m_shiftMoveAvg.setCapacity(MOVINGAVG_WINDOWSIZE);
+    m_maMovAvg.setCapacity(MOVINGAVG_WINDOWSIZE);
+
+    m_dMaxSample = 0;
 }
 
-QVector<double> Amplitudes::y() {
-    return m_yVec;
-}
+void Amplitudes::loadAmplitudes(int refreshRateMS) {
+    int jump = (m_nSampleRate/1000) * refreshRateMS;
+    int samples = ceil(m_nNumSamples/refreshRateMS);
 
-void Amplitudes::loadMS(int startMS, int endMS, int refreshRateMS) {
-    int startPos = (m_sampleRate / 1000) * startMS;
-    int endPos = ((m_sampleRate / 1000) * endMS) - 1;
+    m_maMovAvg.clear();
 
-    std::cout << "SP: " << startPos << std::endl;
-    std::cout << "EP: " << endPos << std::endl;
-    std::cout << "SR: " << m_sampleRate << std::endl;
-    std::cout << "NP: " << m_numSamples << std::endl;
+    m_qvAmplitude.clear();
+    m_qvAmplitude.reserve(samples);
 
-    if(startMS >= endMS) return;
-    if(startMS < 0) return;
-    if(endPos >= m_numSamples) return;
+    m_dMaxSample = 0;
 
-    int jump = (m_sampleRate/1000) * refreshRateMS;
-    int samples = ceil((endMS - startMS) / refreshRateMS);
-
-    // std::cout << "DU: " << duration << std::endl;
-    std::cout << "JP: " << jump << std::endl;
-
-    m_yVec.clear();
-    m_yVec.reserve(samples);
-    int idx = startPos;
-    while(idx <= endPos) {
-        m_yVec.push_back(abs(m_audioFile.samples[0][idx]));
+    int idx = 0;
+    while(idx < m_nNumSamples) {
+        m_maMovAvg.add(abs(m_afAudioFile.samples[0][idx]));
+        double val = m_maMovAvg.averageDouble();
+        m_qvAmplitude.push_back(val);
+        m_dMaxSample = fmax(m_dMaxSample, val);
         idx += jump;
     }
 
-    std::cout << "SZ: " << m_yVec.size() << std::endl;
-
-    emit yUpdated();
+    emit amplitudeUpdated();
 }
 
-void Amplitudes::initShift(int startMS, int refreshRateMS, int timeSpanMS) {
-    m_shiftStartPos = (m_sampleRate / 1000) * startMS;
-    m_shiftJump = (m_sampleRate / 1000) * refreshRateMS;
-    m_tickCnt = timeSpanMS / refreshRateMS;
-
-    m_shiftMoveAvg.clear();
-    m_shiftCount = 0;
-
-    m_yVec.clear();
-    while(m_shiftCount < m_tickCnt) {
-        int idx = m_shiftStartPos + (m_shiftCount * m_shiftJump);
-        double val = m_audioFile.samples[0][idx];
-        m_shiftMoveAvg.add(abs(val));
-        m_yVec.push_back(m_shiftMoveAvg.averageDouble());
-        ++m_shiftCount;
-    }
-
-    emit yUpdated();
+int Amplitudes::sampleRate() {
+    return m_nSampleRate;
 }
 
-void Amplitudes::shift() {
-    m_yVec.pop_front();
-
-    int idx = m_shiftStartPos + (m_shiftCount * m_shiftJump);
-    double val = m_audioFile.samples[0][idx];
-
-    m_shiftMoveAvg.add(abs(val));
-    m_yVec.push_back(m_shiftMoveAvg.averageDouble());
-    ++m_shiftCount;
-
-    emit yUpdated();
+int Amplitudes::numSamples() {
+    return m_nNumSamples;
 }
 
-QVector<double> Amplitudes::loadAmplitudes(int startMS, int endMS, int refreshRateMS) {
-    int startPos = (m_sampleRate / 1000) * startMS;
-    int endPos = ((m_sampleRate / 1000) * endMS) + startPos - 1;
-
-    int jump = endPos - startPos - 1 / TICKCOUNT;
-
-    m_yVec.clear();
-    for(int i = 0; i < TICKCOUNT-1; i++) {
-        int idx = startPos + (i * jump);
-        m_yVec.push_back(abs(m_audioFile.samples[0][idx]));
-    }
-    m_yVec.push_back(abs(m_audioFile.samples[0][endPos]));
-
-    emit yUpdated();
+double Amplitudes::maxSampleValue() {
+    return m_dMaxSample;
 }
+
+

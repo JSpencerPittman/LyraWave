@@ -12,4 +12,5 @@ qt6_add_qml_module(content
     RESOURCES
         fonts/fonts.txt
         QML_FILES Screen01.ui.qml AmpGraph.qml
+        QML_FILES AudioManage.qml
 )

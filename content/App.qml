@@ -13,9 +13,13 @@ Window {
     visible: true
     title: "LyraWave"
 
-    AmpGraph {
-        id: ampgraph
+    AudioManage {
+        id: audioManage
     }
+
+    // AmpGraph {
+    //     id: ampgraph
+    // }
 
     // Screen01 {
     //     id: mainScreen
