@@ -5,6 +5,14 @@
 #include <QFile>
 #include <qqml.h>
 
+extern "C"
+{
+    #include <libavcodec/avcodec.h>
+    #include <libavformat/avformat.h>
+    #include <libavformat/avio.h>
+}
+
+
 #include "Wav.h"
 #include "MoveAvg.hpp"
 

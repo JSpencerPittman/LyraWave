@@ -6,7 +6,10 @@ qt_add_qml_module(AudioLib
         Amplitudes.cpp
         Wav.h
         MoveAvg.hpp
+        amplitudereader.h
+        amplitudereader.cpp
        RESOURCES
-        rsc/sample.qrc)
+        rsc/sample.qrc
+    )
 
 # qt_add_resources(LyraWaveApp rsc/sample.qrc)
