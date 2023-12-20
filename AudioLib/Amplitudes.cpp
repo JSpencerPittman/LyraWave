@@ -1,61 +1,30 @@
 #include "Amplitudes.h"
 
 Amplitudes::Amplitudes(QObject *parent) : QObject(parent) {
-    loadAudioFile(":/Audio/tropicLove.wav");
+    // loadAudioFile(":/Audio/tropicLove.wav");
+    m_maMovAvg.setCapacity(MOVINGAVG_WINDOWSIZE);
 }
 
 QVector<double> Amplitudes::amplitudes() {
     return m_qvAmplitude;
 }
 
-void Amplitudes::loadAudioFile(const QString& path) {
-    QFile file(path);
-    file.open(QIODevice::ReadOnly);
-    QByteArray byteArray = file.readAll();
-    std::vector<uint8_t> byteVec(byteArray.begin(), byteArray.end());
-    m_afAudioFile.loadFromMemory(byteVec);
+void Amplitudes::load(const QUrl& path, uint32_t amplitudeRecordRateMS) {
+    m_arAmplitudeReader.setPath(path.toLocalFile().toStdString());
+    m_arAmplitudeReader.setAmplitudeRecordRateMS(amplitudeRecordRateMS);
 
-    m_nSampleRate = m_afAudioFile.getSampleRate();
-    m_nNumSamples = m_afAudioFile.getNumSamplesPerChannel();
+    std::vector<int16_t> *collectedAmplitudes = m_arAmplitudeReader.collectAmplitudes();
 
-    m_maMovAvg.setCapacity(MOVINGAVG_WINDOWSIZE);
-
-    m_dMaxSample = 0;
-}
-
-void Amplitudes::loadAmplitudes(int refreshRateMS) {
-    int jump = (m_nSampleRate/1000) * refreshRateMS;
-    int samples = ceil(m_nNumSamples/refreshRateMS);
+    m_qvAmplitude.clear();
+    m_qvAmplitude.reserve(collectedAmplitudes->size());
 
     m_maMovAvg.clear();
 
-    m_qvAmplitude.clear();
-    m_qvAmplitude.reserve(samples);
-
-    m_dMaxSample = 0;
-
-    int idx = 0;
-    while(idx < m_nNumSamples) {
-        m_maMovAvg.add(abs(m_afAudioFile.samples[0][idx]));
-        double val = m_maMovAvg.averageDouble();
-        m_qvAmplitude.push_back(val);
-        m_dMaxSample = fmax(m_dMaxSample, val);
-        idx += jump;
+    for(int i = 0; i < collectedAmplitudes->size(); i++) {
+        m_maMovAvg.add(abs(collectedAmplitudes->at(i)));
+        m_qvAmplitude.push_back(m_maMovAvg.averageDouble());
     }
 
     emit amplitudeUpdated();
 }
-
-int Amplitudes::sampleRate() {
-    return m_nSampleRate;
-}
-
-int Amplitudes::numSamples() {
-    return m_nNumSamples;
-}
-
-double Amplitudes::maxSampleValue() {
-    return m_dMaxSample;
-}
-
 

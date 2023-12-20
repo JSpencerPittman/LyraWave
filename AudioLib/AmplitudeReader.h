@@ -6,6 +6,7 @@ extern "C"
     #include <libavcodec/avcodec.h>
     #include <libavformat/avformat.h>
     #include <libavformat/avio.h>
+    #include <libavutil/rational.h>
 }
 
 #include <exception>
@@ -28,7 +29,7 @@ public:
     void setPath(const std::string path);
     void setAmplitudeRecordRateMS(const uint32_t amplitudeRecordRateMS);
 
-    std::vector<double> *collectAmplitudes();
+    std::vector<int16_t> *collectAmplitudes();
 
 
     class AVException : public std::exception {
@@ -49,11 +50,6 @@ private:
 
     uint32_t m_uiSampleFreqHz;
     uint32_t m_uiNBSamples;
-
-
-    static int64_t estimateNBCollectedAmplitudes(int64_t duration, AVRational timeBase,
-                                   int64_t sampleJump, int64_t sampleFreqHZ);
-
 };
 
 #endif

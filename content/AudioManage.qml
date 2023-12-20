@@ -10,10 +10,15 @@ Item {
     id: audioManage
     anchors.fill: parent
 
-    property int cursorStartMS: 0
-    property int cursorTermMS: 60*1000
+    onAudioFilePathChanged: {
+        ampgraph.loadAudioFile(audioFilePath);
+        audioPlayer.source = audioFilePath;
+    }
 
-    property string audioFilePath: "qrc:/Audio/tropicLove.mp3"
+    property int cursorStartMS: 0
+    property int cursorTermMS: 0
+
+    property string audioFilePath: ""
 
     MediaPlayer {
         id: audioPlayer
@@ -58,6 +63,11 @@ Item {
 
             Button {
                 text: "load"
+                onClicked: {
+                    ampgraph.pause();
+                    audioPlayer.pause();
+                    fileDialog.open();
+                }
             }
         }
 
@@ -90,7 +100,8 @@ Item {
         title: "Please choose an audio file (wav/mp3)"
         currentFolder: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
         onAccepted: {
-            audioManage.audioFilePath = selectedFile
+            fileDialog.close();
+            audioManage.audioFilePath = selectedFile;
         }
     }
 }

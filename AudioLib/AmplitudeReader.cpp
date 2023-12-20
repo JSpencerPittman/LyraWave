@@ -1,4 +1,4 @@
-#include "amplitudereader.h"
+#include "AmplitudeReader.h"
 
 AmplitudeReader::AmplitudeReader()
     : m_uiAmplitudeSampleIntervalMS(0) {}
@@ -22,7 +22,7 @@ void AmplitudeReader::setAmplitudeRecordRateMS(const uint32_t amplitudeSampleInt
     m_uiAmplitudeSampleIntervalMS = amplitudeSampleIntervalMS;
 }
 
-std::vector<double> *AmplitudeReader::collectAmplitudes() {
+std::vector<int16_t> *AmplitudeReader::collectAmplitudes() {
     try {
         // Verify a path has been specified
         if(m_sPath.empty())
@@ -43,7 +43,7 @@ std::vector<double> *AmplitudeReader::collectAmplitudes() {
     // Stream of the media file containing audio
     AVStream *audioStream = nullptr;
     // Array containing collected amplitudes
-    std::vector<double> *collectedAmplitudes = nullptr;
+    std::vector<int16_t> *collectedAmplitudes = new std::vector<int16_t>;
 
     try {
         int resOfOperation; // result of lavf functions
@@ -120,11 +120,12 @@ std::vector<double> *AmplitudeReader::collectAmplitudes() {
         uint32_t cyclicCounter = 0;
         m_uiNBSamples = 0;
 
-        collectedAmplitudes->reserve(estimateNBCollectedAmplitudes(
-            audioStream->duration,
-            audioStream->time_base,
-            sampleJump,
-            m_uiSampleFreqHz));
+        int64_t estimate = (int64_t)audioStream->duration;
+        estimate *= (int64_t)audioStream->time_base.num;
+        estimate /= (int64_t)audioStream->time_base.den;
+        estimate *= (int64_t)m_uiSampleFreqHz;
+        estimate /= (int64_t)sampleJump;
+        collectedAmplitudes->reserve(estimate);
 
         // This actually reads packets instead of singular frames
         // While packets are available load them into packet
@@ -139,7 +140,7 @@ std::vector<double> *AmplitudeReader::collectAmplitudes() {
                 // Return decoded output from the decoder to the frame
                 resOfOperation = avcodec_receive_frame(codecContext, frame);
                 while(resOfOperation == 0) {
-                    double *samples = (double*)frame->data[0];
+                    int16_t *samples = (int16_t*)frame->data[0];
                     for(int i = 0; i < frame->nb_samples; ++i) {
                         ++m_uiNBSamples;
                         if(cyclicCounter % sampleJump == 0) {
@@ -177,16 +178,6 @@ std::vector<double> *AmplitudeReader::collectAmplitudes() {
 
     return collectedAmplitudes;
 
-}
-
-int64_t estimateNBCollectedAmplitudes(int64_t duration, AVRational timeBase,
-                                             int64_t sampleJump, int64_t sampleFreqHZ) {
-    int64_t estimate = duration;
-    estimate *= (int64_t)timeBase.num;
-    estimate /= (int64_t)timeBase.den;
-    estimate *= sampleFreqHZ;
-    estimate /= sampleJump;
-    return estimate;
 }
 
 AmplitudeReader::AVException::AVException(const std::string &message)

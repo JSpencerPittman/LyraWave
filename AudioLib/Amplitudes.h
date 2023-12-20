@@ -5,18 +5,11 @@
 #include <QFile>
 #include <qqml.h>
 
-extern "C"
-{
-    #include <libavcodec/avcodec.h>
-    #include <libavformat/avformat.h>
-    #include <libavformat/avio.h>
-}
+#include <iostream>
 
-
-#include "Wav.h"
+#include "AmplitudeReader.h"
 #include "MoveAvg.hpp"
 
-#define TICKCOUNT 10
 #define MOVINGAVG_WINDOWSIZE 3
 
 class Amplitudes : public QObject {
@@ -29,23 +22,15 @@ public:
 
     QVector<double> amplitudes();
 
-    Q_INVOKABLE void loadAudioFile(const QString& path);
-    Q_INVOKABLE void loadAmplitudes(int refreshRateMS);
-
-    Q_INVOKABLE int sampleRate();
-    Q_INVOKABLE int numSamples();
-    Q_INVOKABLE double maxSampleValue();
+    Q_INVOKABLE void load(const QUrl& path, uint32_t amplitudeRecordRateMS);
 
 signals:
     void amplitudeUpdated();
 
 private:
     QVector<double> m_qvAmplitude;
-    AudioFile<double> m_afAudioFile;
+    AmplitudeReader m_arAmplitudeReader;
     MovingAverage<double> m_maMovAvg;
-    int m_nSampleRate;
-    int m_nNumSamples;
-    double m_dMaxSample;
 };
 
 #endif
